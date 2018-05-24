@@ -250,7 +250,7 @@ def single_scale_test_net(net, imdb, targe_size=320, vis=False):
 def multi_scale_test_net_320(net, imdb, vis=False):
     targe_size = 320
     num_images = len(imdb.image_index)
-    all_boxes = [[[] for _ in xrange(num_images)] for _ in xrange(imdb.num_classes)]
+    all_boxes = [[[] for _ in xrange(num_images)] for _ in xrange(imdb.num_classes)] #生成num_classes*num_images的列表 每个都是空列表
     output_dir = get_output_dir(imdb, net)
 
     for i in xrange(num_images):
