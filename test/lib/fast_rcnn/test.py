@@ -251,7 +251,7 @@ def multi_scale_test_net_320(net, imdb, vis=False):
     targe_size = 320
     num_images = len(imdb.image_index)
     all_boxes = [[[] for _ in xrange(num_images)] for _ in xrange(imdb.num_classes)]
-    output_dir = get_output_dir(imdb, net)
+    output_dir = get_output_dir(imdb, net) #返回实验数据所在的目录
 
     for i in xrange(num_images):
         im = cv2.imread(imdb.image_path_at(i))
