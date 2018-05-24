@@ -7,25 +7,27 @@ import cPickle
 import os
 
 def im_detect(net, im, targe_size):
-    im_orig = im.astype(np.float32, copy=True)
-    im_orig -= cfg.PIXEL_MEANS
+    im_orig = im.astype(np.float32, copy=True) #变量类型转换，
+    im_orig -= cfg.PIXEL_MEANS #减去像素均值np.array([[[104, 117, 123]]])
     im = cv2.resize(im_orig, None, None, fx=float(targe_size)/float(im.shape[1]), fy=float(targe_size)/float(im.shape[0]), interpolation=cv2.INTER_LINEAR)
+    # 将图像缩放为target_size大小，方法线性二差值
     blob = np.zeros((1, targe_size, targe_size, 3), dtype=np.float32)
-    blob[0, :, :, :] = im
+    #生成（1，target_size，target_size，3）的0矩阵
+    blob[0, :, :, :] = im #令blob等于缩放后的图
     channel_swap = (0, 3, 1, 2)
-    blob = blob.transpose(channel_swap)
-    net.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1])
-    net.blobs['data'].data[...] = blob
-    detections = net.forward()['detection_out']
+    blob = blob.transpose(channel_swap) #转置（BGR -> RGB）
+    net.blobs['data'].reshape(1, 3, im.shape[0], im.shape[1]) 
+    net.blobs['data'].data[...] = blob ###
+    detections = net.forward()['detection_out'] ###输出检测框？
 
     det_label = detections[0, 0, :, 1]
-    det_conf = detections[0, 0, :, 2]
-    det_xmin = np.minimum(np.maximum(detections[0, 0, :, 3] * im_orig.shape[1], 0), im_orig.shape[1] - 1)
+    det_conf = detections[0, 0, :, 2] ###置信度？
+    det_xmin = np.minimum(np.maximum(detections[0, 0, :, 3] * im_orig.shape[1], 0), im_orig.shape[1] - 1) 
     det_ymin = np.minimum(np.maximum(detections[0, 0, :, 4] * im_orig.shape[0], 0), im_orig.shape[0] - 1)
     det_xmax = np.minimum(np.maximum(detections[0, 0, :, 5] * im_orig.shape[1], 0), im_orig.shape[1] - 1)
     det_ymax = np.minimum(np.maximum(detections[0, 0, :, 6] * im_orig.shape[0], 0), im_orig.shape[0] - 1)
     dets = np.column_stack((det_xmin, det_ymin, det_xmax, det_ymax, det_conf, det_label))
-
+    
     keep_index = np.where(dets[:, 4] >= 0)[0]
     dets = dets[keep_index, :]
     return dets
@@ -251,15 +253,15 @@ def multi_scale_test_net_320(net, imdb, vis=False):
     targe_size = 320
     num_images = len(imdb.image_index)
     all_boxes = [[[] for _ in xrange(num_images)] for _ in xrange(imdb.num_classes)] #生成num_classes*num_images的列表 每个都是空列表
-    output_dir = get_output_dir(imdb, net)
+    output_dir = get_output_dir(imdb, net) #返回目录
 
     for i in xrange(num_images):
-        im = cv2.imread(imdb.image_path_at(i))
+        im = cv2.imread(imdb.image_path_at(i))  #打开图像
 
         # ori and flip
-        det0 = im_detect(net, im, targe_size)
-        det0_f = flip_im_detect(net, im, targe_size)
-        det0 = np.row_stack((det0, det0_f))
+        det0 = im_detect(net, im, targe_size) #图像检测
+        det0_f = flip_im_detect(net, im, targe_size) #图像翻转
+        det0 = np.row_stack((det0, det0_f)) #行扩展、行变多
 
         det_r = im_detect_ratio(net, im, targe_size, int(0.6*targe_size))
         det_r_f = flip_im_detect_ratio(net, im, targe_size, int(0.6*targe_size))
